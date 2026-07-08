@@ -28,6 +28,9 @@ let totalBattles = 0;
 let video = true;
 let region = "eu";
 
+let startWithLeft = true;
+let autoPlayTimeout = null;
+
 fetch('songList.json')
     .then(response => response.json())
     .then(data => {
@@ -61,6 +64,10 @@ function configureLoadButton() {
 }
 
 function showDuel(id1, id2) {
+
+    if (autoPlayTimeout) {
+    clearTimeout(autoPlayTimeout);
+}
     const duelContainer = document.getElementById('duel');
     duelContainer.innerHTML = "";
 
@@ -124,8 +131,43 @@ function showDuel(id1, id2) {
     }
 
     const percent = Math.floor(sortedNo * 100 / totalBattles);
-    progressBar(`Battle no. ${battleNo}`, percent);
+progressBar(`Battle no. ${battleNo}`, percent);
 
+autoPlayTimeout = setTimeout(autoPlayBattle, 150);
+
+}
+function autoPlayBattle() {
+
+    if (autoPlayTimeout) {
+        clearTimeout(autoPlayTimeout);
+    }
+
+    const medias = [...document.querySelectorAll("#duel audio, #duel video")];
+
+    if (medias.length === 0) return;
+
+    medias.forEach(media => {
+        media.pause();
+        media.currentTime = 0;
+        media.onended = null;
+    });
+
+    if (medias.length === 1) {
+        medias[0].play().catch(()=>{});
+        return;
+    }
+
+    const first = startWithLeft ? medias[0] : medias[1];
+    const second = startWithLeft ? medias[1] : medias[0];
+
+    startWithLeft = !startWithLeft;
+
+    first.onended = () => {
+        second.currentTime = 0;
+        second.play().catch(()=>{});
+    };
+
+    first.play().catch(()=>{});
 }
 
 function pick(sortType) {
